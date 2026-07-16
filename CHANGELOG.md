@@ -1,3 +1,10 @@
+## [0.0.3](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.0.2...v0.0.3) (2026-07-16)
+
+
+### Bug Fixes
+
+* Ruff lint F401 + commitlint ESM config ([19e1bbe](https://github.com/kuaizhongqiang/AgentWebSearchingTool/commit/19e1bbe8b09a10ac4a7121e69b90609e2d44ab28))
+
 ## [0.0.2](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.0.1...v0.0.2) (2026-07-16)
 
 
