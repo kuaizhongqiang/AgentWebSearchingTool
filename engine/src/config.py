@@ -42,11 +42,13 @@ def load_config(path: str | Path | None = None) -> dict[str, Any]:
                 },
                 "lmstudio": {
                     "base_url": "http://localhost:1234/v1",
+                    "model": "",
                 },
             },
             "cross_encoder": {
                 "model": "",
             },
+            "top_k_coarse": 20,
             "top_k": 5,
         },
         "server": {

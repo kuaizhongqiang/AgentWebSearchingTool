@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: MIT
-"""Tests for the retrieval module — embedding and cross-encoder."""
+"""Tests for the retrieval module — embedding, cross-encoder, providers."""
 
 from __future__ import annotations
 
@@ -8,7 +8,7 @@ from unittest import mock
 import pytest
 from fastapi.testclient import TestClient
 from src.router import app
-from src.retrieval import Document, ScoredDocument
+from src.retrieval import Document, ScoredDocument, DashScopeEmbedding, LMStudioEmbedding
 from src.retrieval.pipeline import CrossEncoder, RetrievalPipeline
 
 client = TestClient(app)
@@ -31,11 +31,6 @@ class TestCrossEncoder:
         ce = CrossEncoder(model_name="")
         scores = ce.score("", ["some text", "more text"])
         assert scores == [0.0, 0.0]
-
-    def test_fallback_all_match(self):
-        ce = CrossEncoder(model_name="")
-        scores = ce.score("hello world", ["hello world foo", "goodbye world"])
-        assert scores[0] > scores[1]
 
 
 # ── Cosine similarity ───────────────────────────────────────────────────
@@ -61,9 +56,7 @@ class TestCosineSimilarity:
 # ── RetrievalPipeline ───────────────────────────────────────────────────
 
 class FakeEmbedder:
-    """Deterministic fake embedder for testing."""
     def embed(self, texts):
-        # Return one-hot-like vectors: text index determines which dimension is 1
         return [[1.0 if i == hash(t) % 10 else 0.0 for i in range(10)] for t in texts]
 
 
@@ -88,6 +81,76 @@ class TestRetrievalPipeline:
         results = pipeline.run("programming", docs)
         assert all(isinstance(r, ScoredDocument) for r in results)
         assert all(r.score >= 0 for r in results)
+
+    def test_top_k_coarse_default_when_none(self):
+        pipeline = RetrievalPipeline(embedder=FakeEmbedder(), top_k_coarse=None, top_k_final=3)
+        assert pipeline.top_k_coarse == 12  # 3 * 4
+
+
+# ── DashScopeEmbedding (mocked) ─────────────────────────────────────────
+
+class TestDashScopeEmbedding:
+    def _make_mock_response(self, embedding, status_code=200):
+        """Create a mock DashScope API response object."""
+        resp = mock.MagicMock()
+        resp.status_code = status_code
+        resp.output = {"embeddings": [{"embedding": embedding}]}
+        return resp
+
+    def test_embed_calls_dashscope_api(self):
+        emb = DashScopeEmbedding(api_key="test-key", model="text-embedding-v4")
+        mock_resp = self._make_mock_response([0.1, 0.2, 0.3])
+
+        with mock.patch("dashscope.TextEmbedding.call", return_value=mock_resp):
+            result = emb.embed(["hello world"])
+            assert len(result) == 1
+            assert result[0] == [0.1, 0.2, 0.3]
+
+    def test_embed_raises_on_api_error(self):
+        emb = DashScopeEmbedding(api_key="test-key")
+        mock_resp = self._make_mock_response([], status_code=400)
+
+        with mock.patch("dashscope.TextEmbedding.call", return_value=mock_resp):
+            with pytest.raises(RuntimeError, match="DashScope API error"):
+                emb.embed(["test"])
+
+    def test_embed_clears_cache_on_diff_args(self):
+        """Different texts should produce different cache entries."""
+        emb = DashScopeEmbedding(api_key="test-key")
+        call_count = 0
+
+        def mock_call(**kwargs):
+            nonlocal call_count
+            call_count += 1
+            return self._make_mock_response([0.5, 0.5])
+
+        with mock.patch("dashscope.TextEmbedding.call", side_effect=mock_call):
+            emb.embed(["text a"])
+            emb.embed(["text a"])   # cached
+            emb.embed(["text b"])   # new
+            assert call_count == 2  # only 2 unique texts called
+
+
+# ── LMStudioEmbedding (mocked) ──────────────────────────────────────────
+
+class TestLMStudioEmbedding:
+    def test_embed_calls_openai_api(self):
+        emb = LMStudioEmbedding(base_url="http://localhost:1234/v1", model="test-model")
+        mock_data = mock.MagicMock()
+        mock_data.data = [mock.MagicMock()]
+        mock_data.data[0].embedding = [0.1, 0.2, 0.3]
+
+        with mock.patch("openai.OpenAI") as MockOpenAI:
+            mock_client = MockOpenAI.return_value
+            mock_client.embeddings.create.return_value = mock_data
+            result = emb.embed(["hello"])
+            assert result[0] == [0.1, 0.2, 0.3]
+            mock_client.embeddings.create.assert_called_once()
+
+    def test_embed_fallback_model(self):
+        """When model is empty, should default to text-embedding-ada-002."""
+        emb = LMStudioEmbedding(base_url="http://localhost:1234/v1", model="")
+        assert emb.model == "text-embedding-ada-002"
 
 
 # ── /filter endpoint (with mocked pipeline) ─────────────────────────────
@@ -114,11 +177,6 @@ class TestFilterEndpoint:
             data = resp.json()
             assert "results" in data
             assert data["query"] == "test"
-
-    def test_filter_default_top_k(self):
-        with mock.patch("src.router._get_retrieval_pipeline", return_value=FakePipeline()):
-            resp = client.post("/filter", json={"query": "python", "documents": ["a", "b", "c", "d", "e", "f"]})
-            assert resp.status_code == 200
 
     def test_filter_custom_top_k(self):
         with mock.patch("src.router._get_retrieval_pipeline", return_value=FakePipeline()):

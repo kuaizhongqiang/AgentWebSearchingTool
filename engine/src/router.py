@@ -53,6 +53,7 @@ def _get_retrieval_pipeline() -> RetrievalPipeline:
     _retrieval_pipeline = RetrievalPipeline(
         embedder=embedder,
         cross_encoder=cross_encoder,
+        top_k_coarse=rc.get("top_k_coarse"),
         top_k_final=rc["top_k"],
     )
     return _retrieval_pipeline
