@@ -16,6 +16,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@agent-web-search/types": "file:../packages/types",
     "commander": "^12.0.0"
   },
   "devDependencies": {

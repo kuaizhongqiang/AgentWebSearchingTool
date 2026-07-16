@@ -1,0 +1,17 @@
+{
+  "name": "@agent-web-search/types",
+  "version": "0.1.0",
+  "description": "Shared types for Agent Web Searching Tool",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0"
+  }
+}
