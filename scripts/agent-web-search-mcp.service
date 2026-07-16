@@ -1,0 +1,16 @@
+[Unit]
+Description=Agent Web Search MCP Server
+After=agent-web-search-engine.service
+Requires=agent-web-search-engine.service
+
+[Service]
+Type=simple
+User=agent-search
+WorkingDirectory=/opt/agent-web-search/mcp-server
+ExecStart=/usr/bin/node dist/index.js
+Restart=always
+RestartSec=5
+Environment=ENGINE_URL=http://127.0.0.1:8000
+
+[Install]
+WantedBy=multi-user.target
