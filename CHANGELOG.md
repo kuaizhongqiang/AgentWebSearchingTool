@@ -1,3 +1,10 @@
+## [0.0.5](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.0.4...v0.0.5) (2026-07-16)
+
+
+### Bug Fixes
+
+* Ruff F401 unused imports ([cc106a9](https://github.com/kuaizhongqiang/AgentWebSearchingTool/commit/cc106a94cecb2fcc7d04c36824cdc82a31d529ba))
+
 ## [0.0.4](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.0.3...v0.0.4) (2026-07-16)
 
 
