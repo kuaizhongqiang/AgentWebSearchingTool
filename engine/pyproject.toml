@@ -5,26 +5,42 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "agent-web-search-engine"
 version = "0.1.0"
-description = "AI Agent web search & intelligent filtering engine"
+description = "AI Agent web search & intelligent filtering engine — bundled with SearXNG-core"
 readme = "README.md"
-license = {text = "MIT"}
+license = {text = "MIT (engine) / AGPL-3.0-or-later (bundled SearXNG-core)"}
 requires-python = ">=3.11"
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Internet :: WWW/HTTP :: Indexing/Search",
 ]
 dependencies = [
+    # Web framework
     "fastapi>=0.100",
     "uvicorn>=0.23",
-    "httpx>=0.25",
+    # HTTP client (also used by bundled SearXNG-core)
+    "httpx[http2]>=0.25",
+    "httpx-socks>=0.10",
+    # Content extraction
     "trafilatura>=1.6",
+    "lxml>=5.0",
     "lxml_html_clean>=0.1",
+    # Config & data
     "pyyaml>=6.0",
     "numpy>=1.24",
+    # SearXNG-core dependencies (Flask-based web app)
+    "flask>=3.0",
+    "python-dateutil>=2.9",
+    "certifi>=2024.0",
+    "markdown-it-py>=4.0",
+    "msgspec>=0.21",
+    "isodate>=0.7",
+    "typer>=0.26",
+    "typing-extensions>=4.16",
 ]
 
 [project.optional-dependencies]
@@ -52,6 +68,10 @@ agent-web-search-engine = "src.router:main"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["src*"]
+
+[tool.setuptools.package-data]
+# Includes the bundled SearXNG-core data in the wheel (AGPL-3.0)
+src = ["searxng_core/**/*"]
 
 [tool.ruff]
 line-length = 100

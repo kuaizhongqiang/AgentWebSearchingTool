@@ -6,8 +6,9 @@
 
 ```
 ├── searxng-core/       # SearXNG Fork (git submodule), AGPL-3.0
+│                       #   → 打包进 engine/ wheel, 随 PyPI 发布
 ├── engine/             # Python 核心引擎, MIT
-│   ├── src/            #   FastAPI + 搜索/爬取/提取/检索
+│   ├── src/            #   FastAPI + 搜索/爬取/提取/检索 + SearXNG 进程管理
 │   └── tests/          #   66 tests
 ├── mcp-server/         # MCP Server, MIT (TypeScript)
 │   ├── src/            #   MCP 协议工具定义
@@ -34,19 +35,15 @@
 ## 快速开始
 
 ```bash
-# 1. 启动 SearXNG (元搜索引擎)
-cd searxng-core && pip install -r requirements.txt
-python -m searx.webapp                                       # → localhost:8888
-
-# 2. 启动 Engine (核心服务)
-cd engine && pip install -e ".[dev,retrieval]" && pip install openai
+# 1. 启动 Engine (核心服务) — SearXNG 自动在后台启动
+cd engine && pip install -e ".[dev,retrieval]"
 uvicorn src.router:app --reload --port 8000                  # → localhost:8000
 
-# 3. 启动 MCP Server (AI Agent 接入)
+# 2. 启动 MCP Server (AI Agent 接入)
 cd mcp-server && npm install && npm run build
 ENGINE_URL=http://127.0.0.1:8000 node dist/index.js
 
-# 4. 或用 CLI 直接使用
+# 3. 或用 CLI 直接使用
 cd cli && npm install && npm run build && npm link
 awst search "hello world"
 ```
@@ -89,8 +86,9 @@ cd cli && npm test                    # 13 tests
 
 ## 许可证
 
-- **主体** (engine / mcp-server / cli) — MIT
+- **engine / mcp-server / cli** — MIT
 - **searxng-core/** — AGPL-3.0 (fork from [searxng/searxng](https://github.com/searxng/searxng))
+  - 已打包在 `agent-web-search-engine` wheel 中，随 PyPI 发布
 
 ## 里程碑
 

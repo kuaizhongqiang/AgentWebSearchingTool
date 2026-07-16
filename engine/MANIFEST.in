@@ -1,0 +1,7 @@
+# Include LICENSE files
+include LICENSE
+include src/searxng_core/LICENSE
+include src/searxng_core/README.rst
+
+# Recursively include all bundled searxng-core files
+recursive-include src/searxng_core *

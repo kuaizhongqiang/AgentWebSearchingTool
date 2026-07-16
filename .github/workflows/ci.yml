@@ -23,9 +23,13 @@ jobs:
         working-directory: engine
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Bundle searxng-core into package
+        run: python scripts/prepare_build.py
       - run: pip install -e ".[dev,retrieval]"
       - run: pytest --cov
 
@@ -36,9 +40,13 @@ jobs:
         working-directory: engine
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Bundle searxng-core into package
+        run: python scripts/prepare_build.py
       - run: pip install ruff
       - run: ruff check src/
 

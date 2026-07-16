@@ -17,6 +17,15 @@ def load_config(path: str | Path | None = None) -> dict[str, Any]:
     config_path = Path(path) if path else DEFAULT_CONFIG_PATH
 
     config: dict[str, Any] = {
+        "searxng_core": {
+            "auto_start": True,
+            "port": 8888,
+            "bind_address": "127.0.0.1",
+            "secret": "",
+            "path": "",
+            "settings_path": "",
+            "proxies": {},
+        },
         "search": {
             "provider": "searxng",
             "searxng_url": "http://127.0.0.1:8888",
@@ -58,7 +67,7 @@ def load_config(path: str | Path | None = None) -> dict[str, Any]:
     }
 
     if config_path.exists():
-        with open(config_path) as f:
+        with open(config_path, encoding="utf-8") as f:
             user_config = yaml.safe_load(f) or {}
             _deep_merge(config, user_config)
 
@@ -69,6 +78,15 @@ def load_config(path: str | Path | None = None) -> dict[str, Any]:
         config["server"]["port"] = int(os.environ["ENGINE_PORT"])
     if os.environ.get("DASHSCOPE_API_KEY"):
         config["retrieval"]["embedding"]["dashscope"]["api_key"] = os.environ["DASHSCOPE_API_KEY"]
+    # SearXNG env var overrides
+    if os.environ.get("SEARXNG_SECRET"):
+        config["searxng_core"]["secret"] = os.environ["SEARXNG_SECRET"]
+    if os.environ.get("SEARXNG_PORT"):
+        config["searxng_core"]["port"] = int(os.environ["SEARXNG_PORT"])
+    if os.environ.get("SEARXNG_BIND_ADDRESS"):
+        config["searxng_core"]["bind_address"] = os.environ["SEARXNG_BIND_ADDRESS"]
+    if os.environ.get("SEARXNG_CORE_PATH"):
+        config["searxng_core"]["path"] = os.environ["SEARXNG_CORE_PATH"]
 
     return config
 

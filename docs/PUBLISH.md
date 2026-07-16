@@ -12,7 +12,8 @@ Monorepo 多包发布策略。Python 包发布到 PyPI，TypeScript 包发布到
 | `mcp-server/` | `@kuaizhongqiang/mcp-server-agent-web-search` | npm | TypeScript | MCP Server |
 | `cli/` | `agent-web-search-cli` | npm | TypeScript | CLI 工具 |
 
-> `searxng-core/` 不发布，仅作为 git submodule 存在。
+> `searxng-core/` 作为 package-data **打包进** `agent-web-search-engine` 的 wheel 中，随 PyPI 一起发布。
+> engine 启动时自动以子进程启动 SearXNG，无需用户额外部署。
 
 ---
 
@@ -120,9 +121,13 @@ jobs:
         working-directory: engine
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive         # ← 需要拉取 searxng-core submodule
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Bundle searxng-core       # ← 将 submodule 内容复制到包内
+        run: python scripts/prepare_build.py
       - name: Build
         run: |
           pip install build
@@ -195,6 +200,8 @@ jobs:
 ## 包配置文件
 
 ### `engine/pyproject.toml`
+
+> 注意下文的依赖列表是简化版，实际以 `engine/pyproject.toml` 为准。
 
 ```toml
 [build-system]

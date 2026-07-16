@@ -1,11 +1,29 @@
 # AgentWebSearchingTool Engine 配置文件
 
+# ── SearXNG-core 管理 ──────────────────────────────────────────────
+searxng_core:
+  # 是否在 engine 启动时自动启动 SearXNG 子进程
+  auto_start: true
+  # SearXNG 监听地址和端口
+  port: 8888
+  bind_address: 127.0.0.1
+  # SearXNG 密钥（必填，建议通过 SEARXNG_SECRET 环境变量设置）
+  secret: ""
+  # 自定义 searxng-core 路径（留空则使用打包在 wheel 中的版本）
+  path: ""
+  # 自定义 settings.yml 路径（留空则使用默认）
+  settings_path: ""
+  # 代理配置（空字典表示不使用代理）
+  proxies: {}
+
+# ── 搜索 ────────────────────────────────────────────────────────────
 search:
   provider: searxng
   searxng_url: http://127.0.0.1:8888
   default_engine: google
   max_results: 20
 
+# ── 抓取 ─────────────────────────────────────────────────────────────
 fetch:
   strategy: hybrid       # http | browser | hybrid
   request_interval: 1.0
@@ -13,10 +31,12 @@ fetch:
   respect_robots_txt: true
   user_agent_rotation: false
 
+# ── 内容提取 ─────────────────────────────────────────────────────────
 extract:
   engine: trafilatura
   max_content_length: 10000
 
+# ── 向量检索 ─────────────────────────────────────────────────────────
 retrieval:
   embedding:
     provider: dashscope          # dashscope | lmstudio
@@ -30,6 +50,7 @@ retrieval:
   top_k_coarse: 20
   top_k: 5
 
+# ── API 服务 ─────────────────────────────────────────────────────────
 server:
   host: 0.0.0.0
   port: 8000

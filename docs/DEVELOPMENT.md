@@ -16,8 +16,11 @@
 git clone --recurse-submodules <repo-url>
 cd AgentWebSearchingTool
 
-# Python Engine
+# 打包 searxng-core 到 engine 包中（开发流程需要一次）
 cd engine
+python scripts/prepare_build.py
+
+# Python Engine
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
