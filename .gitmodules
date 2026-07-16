@@ -1,0 +1,4 @@
+[submodule "searxng-core"]
+	path = searxng-core
+	url = https://github.com/kuaizhongqiang/searxng.git
+	branch = kuaizhongqiang-patch-1
