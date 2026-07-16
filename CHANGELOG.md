@@ -1,3 +1,10 @@
+## [0.0.1](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.0.0...v0.0.1) (2026-07-16)
+
+
+### Bug Fixes
+
+* CI 修复 + 移除 .mcp.json ([75d9bcc](https://github.com/kuaizhongqiang/AgentWebSearchingTool/commit/75d9bcc60122d398c849d159ce83281aee42419b))
+
 # Changelog
 
 ## [0.0.0] - 2026-07-16
