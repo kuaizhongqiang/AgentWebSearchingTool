@@ -25,7 +25,6 @@ class CrossEncoder:
     def _lazy_load(self):
         if self._model is not None:
             return
-        import torch
         from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
         model_name = self.model_name or "BAAI/bge-reranker-base"
