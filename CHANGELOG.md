@@ -1,3 +1,10 @@
+## [0.1.2](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.1.1...v0.1.2) (2026-07-16)
+
+
+### Bug Fixes
+
+* **#62:** 将 searxng-core 打包进 engine wheel 随 PyPI 发布 ([3ddcf71](https://github.com/kuaizhongqiang/AgentWebSearchingTool/commit/3ddcf7170c84785d7175f4783f2a8a4198276c45)), closes [#62](https://github.com/kuaizhongqiang/AgentWebSearchingTool/issues/62) [#62](https://github.com/kuaizhongqiang/AgentWebSearchingTool/issues/62)
+
 ## [0.1.1](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.1.0...v0.1.1) (2026-07-16)
 
 
