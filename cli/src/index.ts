@@ -1,28 +1,10 @@
 #!/usr/bin/env node
 
+import { createInterface } from "node:readline";
 import { Command } from "commander";
+import type { SearchResult, FetchResult, FilterItem } from "@agent-web-search/types";
 
 const ENGINE_URL = process.env.ENGINE_URL ?? "http://127.0.0.1:8000";
-
-interface SearchResult {
-  title: string;
-  url: string;
-  content?: string;
-  engine?: string;
-  score?: number;
-}
-
-interface FetchResult {
-  url: string;
-  status_code: number;
-  title?: string;
-  text?: string;
-}
-
-interface FilterResult {
-  text: string;
-  score: number;
-}
 
 async function apiPost(path: string, body: unknown): Promise<unknown> {
   const resp = await fetch(`${ENGINE_URL}${path}`, {
@@ -44,6 +26,8 @@ program
   .description("Agent Web Searching Tool CLI")
   .version("0.1.0");
 
+// ── search ─────────────────────────────────────────────────────────────
+
 program
   .command("search")
   .description("Search the web")
@@ -56,36 +40,25 @@ program
   .action(async (query, options) => {
     try {
       const data = await apiPost("/search", {
-        query,
-        num: parseInt(options.num),
-        engine: options.engine,
+        query, num: parseInt(options.num), engine: options.engine,
       }) as { results: SearchResult[] };
-
       let results = data.results;
 
-      // Fetch page content inline
       if (options.fetch) {
         console.error(`Fetching ${results.length} pages...`);
-        const fetchResults = await apiPost("/scrape", {
-          urls: results.map((r: SearchResult) => r.url),
-          extract: true,
+        const scrapeData = await apiPost("/scrape", {
+          urls: results.map(r => r.url), extract: true,
         }) as { results: FetchResult[] };
-        results = results.map((r: SearchResult, i: number) => ({
-          ...r,
-          content: fetchResults.results[i]?.text ?? r.content,
-        }));
+        results = results.map((r, i) => ({ ...r, content: scrapeData.results[i]?.text ?? r.content }));
       }
 
-      // Apply vector filter
       if (options.filter) {
         console.error("Filtering results...");
         const filterData = await apiPost("/filter", {
-          query,
-          documents: results.map((r: SearchResult) => r.content || r.title),
-          top_k: 5,
-        }) as { results: FilterResult[] };
-        const filteredTexts = new Set(filterData.results.map((r: FilterResult) => r.text));
-        results = results.filter((r: SearchResult) => filteredTexts.has(r.content || r.title));
+          query, documents: results.map(r => r.content || r.title), top_k: 5,
+        }) as { results: FilterItem[] };
+        const keepTexts = new Set(filterData.results.map(r => r.text));
+        results = results.filter(r => keepTexts.has(r.content || r.title));
       }
 
       if (options.format === "json") {
@@ -94,9 +67,7 @@ program
         for (const r of results) {
           console.log(`\n  [${r.score?.toFixed(2) ?? "?"}] ${r.title}`);
           console.log(`       ${r.url}`);
-          if (r.content) {
-            console.log(`       ${r.content.slice(0, 200)}...`);
-          }
+          if (r.content) console.log(`       ${r.content.slice(0, 200)}...`);
         }
         console.log(`\n--- ${results.length} results ---`);
       }
@@ -105,6 +76,8 @@ program
       process.exit(1);
     }
   });
+
+// ── fetch ──────────────────────────────────────────────────────────────
 
 program
   .command("fetch")
@@ -131,6 +104,8 @@ program
       process.exit(1);
     }
   });
+
+// ── scrape ─────────────────────────────────────────────────────────────
 
 program
   .command("scrape")
@@ -159,6 +134,53 @@ program
     }
   });
 
+// ── filter (独立命令 + 管道) ───────────────────────────────────────────
+
+program
+  .command("filter")
+  .description("Filter documents using vector similarity (supports stdin pipe)")
+  .requiredOption("-q, --query <query>", "Query to filter by")
+  .option("-f, --format <format>", "Output format (text|json)", "text")
+  .argument("[documents...]", "Documents to filter (omit to read from stdin)")
+  .action(async (documents, options) => {
+    try {
+      let docs: string[] = documents;
+
+      // Pipe mode: read documents from stdin
+      if (!docs || docs.length === 0) {
+        const rl = createInterface({ input: process.stdin });
+        docs = [];
+        for await (const line of rl) {
+          const trimmed = line.trim();
+          if (trimmed) docs.push(trimmed);
+        }
+      }
+
+      if (docs.length === 0) {
+        console.error("No documents provided. Pass as arguments or pipe via stdin.");
+        process.exit(1);
+      }
+
+      const data = await apiPost("/filter", {
+        query: options.query, documents: docs, top_k: 10,
+      }) as { results: FilterItem[] };
+
+      if (options.format === "json") {
+        console.log(JSON.stringify(data, null, 2));
+      } else {
+        for (const r of data.results) {
+          console.log(`  [${r.score.toFixed(3)}] ${r.text.slice(0, 200)}`);
+        }
+        console.log(`\n--- ${data.results.length} results ---`);
+      }
+    } catch (error) {
+      console.error("Filter failed:", error instanceof Error ? error.message : error);
+      process.exit(1);
+    }
+  });
+
+// ── config ─────────────────────────────────────────────────────────────
+
 program
   .command("config")
   .description("Show current configuration")
@@ -167,23 +189,28 @@ program
     console.log(`Node.js: ${process.version}`);
   });
 
+// ── serve ──────────────────────────────────────────────────────────────
+
 program
   .command("serve")
   .description("Start MCP Server mode (stdio)")
   .action(() => {
     console.error("Starting MCP Server...");
-    // Redirect to the MCP Server binary
-    import("child_process").then((cp) => {
-      const child = cp.spawn("npx", ["@kuaizhongqiang/mcp-server-agent-web-search"], {
-        stdio: "inherit",
-        env: { ...process.env, ENGINE_URL },
-      });
-      child.on("exit", (code) => process.exit(code ?? 0));
-    });
+    const MCP_SERVER_PATH = process.env.MCP_SERVER_PATH
+      ?? "../mcp-server/dist/index.js";
+    const child = require("child_process").spawn(
+      process.execPath,
+      [MCP_SERVER_PATH],
+      { stdio: "inherit", env: { ...process.env, ENGINE_URL } }
+    );
+    child.on("exit", (code: number | null) => process.exit(code ?? 0));
   });
 
-// Only parse when run directly (not imported for tests)
+// ── parse ──────────────────────────────────────────────────────────────
+
 const isDirectRun = process.argv[1]?.endsWith("index.ts") || process.argv[1]?.endsWith("index.js") || process.argv[1]?.includes("awst");
 if (isDirectRun) {
   program.parse();
 }
+
+export { program };

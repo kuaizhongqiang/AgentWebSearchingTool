@@ -4,6 +4,7 @@ import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { EngineClient } from "./client.js";
+import { SessionManager } from "./session.js";
 import { SearchParamsSchema, handleWebSearch } from "./tools/search.js";
 import { FetchParamsSchema, handleWebFetch } from "./tools/fetch.js";
 import { ScrapeParamsSchema, handleWebScrape } from "./tools/scrape.js";
@@ -11,6 +12,7 @@ import { FilterParamsSchema, handleSearchFilter } from "./tools/filter.js";
 
 const ENGINE_URL = process.env.ENGINE_URL ?? "http://127.0.0.1:8000";
 const client = new EngineClient({ baseUrl: ENGINE_URL });
+const sessions = new SessionManager();
 
 const server = new Server(
   { name: "agent-web-search-mcp", version: "0.1.0" },
@@ -21,7 +23,7 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
   tools: [
     {
       name: "web_search",
-      description: "Search the web using configured search engines",
+      description: "Search the web — returns session_id for pagination",
       inputSchema: {
         type: "object",
         properties: {
@@ -30,6 +32,19 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           engine: { type: "string", default: "google", description: "Search engine" },
         },
         required: ["query"],
+      },
+    },
+    {
+      name: "web_search_page",
+      description: "Get a page of previously cached search results",
+      inputSchema: {
+        type: "object",
+        properties: {
+          session_id: { type: "string", description: "Session ID from web_search" },
+          page: { type: "number", description: "Page number (1-based)", default: 1 },
+          page_size: { type: "number", default: 10, description: "Results per page" },
+        },
+        required: ["session_id"],
       },
     },
     {
@@ -79,7 +94,19 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     switch (name) {
       case "web_search": {
         const params = SearchParamsSchema.parse(args);
-        return await handleWebSearch(client, params);
+        const result = await handleWebSearch(client, params);
+        // Cache results in session and attach session_id
+        const body = JSON.parse(result.content[0].text);
+        const sessionId = sessions.createSession(params.query, body.results);
+        result.content[0].text = JSON.stringify({ ...body, session_id: sessionId }, null, 2);
+        return result;
+      }
+      case "web_search_page": {
+        const { session_id, page = 1, page_size = 10 } = args as any;
+        const pageResult = sessions.getPage(session_id, page, page_size);
+        return {
+          content: [{ type: "text" as const, text: JSON.stringify(pageResult, null, 2) }],
+        };
       }
       case "web_fetch": {
         const params = FetchParamsSchema.parse(args);
