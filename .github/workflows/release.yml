@@ -3,6 +3,12 @@ name: Release & Publish
 on:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to publish (e.g. 0.1.3). If omitted, semantic-release determines it."
+        required: false
+        type: string
 
 permissions:
   contents: write
@@ -13,18 +19,30 @@ jobs:
   release:
     runs-on: ubuntu-latest
     outputs:
-      version: ${{ steps.semantic.outputs.version }}
-      released: ${{ steps.semantic.outputs.new_release_published }}
+      version: ${{ steps.resolve.outputs.version }}
+      released: ${{ steps.resolve.outputs.released }}
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Manual version: skip semantic-release when version is provided via workflow_dispatch
+      - name: Manual version
+        id: manual
+        if: github.event_name == 'workflow_dispatch' && inputs.version != ''
+        run: |
+          echo "version=${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          echo "released=true" >> "$GITHUB_OUTPUT"
+
+      # Semantic release: for push events or manual trigger without version
       - uses: actions/setup-node@v4
+        if: steps.manual.outputs.released != 'true'
         with:
           node-version: 20
       - name: Semantic Release
         id: semantic
+        if: steps.manual.outputs.released != 'true'
         run: |
           npm install -g semantic-release \
             @semantic-release/commit-analyzer \
@@ -34,18 +52,29 @@ jobs:
             @semantic-release/git
           output=$(npx semantic-release 2>&1) || true
           echo "$output"
-          # Extract version from output and set GitHub Actions outputs
           version=$(echo "$output" | grep -oP 'Published release \K\d+\.\d+\.\d+' | tail -1)
           if [ -n "$version" ]; then
-            echo "version=$version" >> $GITHUB_OUTPUT
-            echo "new_release_published=true" >> $GITHUB_OUTPUT
+            echo "version=$version" >> "$GITHUB_OUTPUT"
+            echo "released=true" >> "$GITHUB_OUTPUT"
             echo "New release detected: v$version"
           else
-            echo "new_release_published=false" >> $GITHUB_OUTPUT
+            echo "released=false" >> "$GITHUB_OUTPUT"
             echo "No new release"
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Resolve: pick manual version if provided, otherwise semantic-release output
+      - name: Resolve final version
+        id: resolve
+        run: |
+          if [ "${{ steps.manual.outputs.released }}" = "true" ]; then
+            echo "version=${{ steps.manual.outputs.version }}" >> "$GITHUB_OUTPUT"
+            echo "released=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${{ steps.semantic.outputs.version }}" >> "$GITHUB_OUTPUT"
+            echo "released=${{ steps.semantic.outputs.released }}" >> "$GITHUB_OUTPUT"
+          fi
 
   pypi-publish:
     needs: release
