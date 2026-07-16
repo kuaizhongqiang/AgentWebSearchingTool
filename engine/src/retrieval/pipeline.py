@@ -73,9 +73,11 @@ class RetrievalPipeline:
         self,
         embedder: EmbeddingProvider,
         cross_encoder: CrossEncoder | None = None,
-        top_k_coarse: int = 20,
+        top_k_coarse: int | None = None,
         top_k_final: int = 5,
     ):
+        if top_k_coarse is None:
+            top_k_coarse = top_k_final * 4  # sensible default
         self.embedder = embedder
         self.cross_encoder = cross_encoder or CrossEncoder()
         self.top_k_coarse = top_k_coarse

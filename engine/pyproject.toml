@@ -24,6 +24,7 @@ dependencies = [
     "trafilatura>=1.6",
     "lxml_html_clean>=0.1",
     "pyyaml>=6.0",
+    "numpy>=1.24",
 ]
 
 [project.optional-dependencies]
@@ -36,6 +37,13 @@ dev = [
 ]
 playwright = [
     "playwright>=1.40",
+]
+retrieval = [
+    "dashscope>=1.14",
+    "openai>=1.0",
+    "sentence-transformers>=2.2",
+    "transformers>=4.36",
+    "torch>=2.0",
 ]
 
 [project.scripts]
