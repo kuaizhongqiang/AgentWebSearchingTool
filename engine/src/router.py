@@ -39,9 +39,9 @@ def _get_retrieval_pipeline() -> RetrievalPipeline:
     rc = config["retrieval"]
     emb_cfg = rc["embedding"]
     if emb_cfg["provider"] == "lmstudio":
-        from os import environ
         embedder = LMStudioEmbedding(
             base_url=emb_cfg["lmstudio"]["base_url"],
+            model=emb_cfg["lmstudio"].get("model", ""),
         )
     else:
         embedder = DashScopeEmbedding(

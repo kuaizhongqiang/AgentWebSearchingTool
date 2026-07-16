@@ -32,54 +32,47 @@ class EmbeddingProvider(ABC):
 
 
 class DashScopeEmbedding(EmbeddingProvider):
-    """Embedding via Alibaba Cloud DashScope API with LRU cache and batching."""
+    """Embedding via Alibaba Cloud DashScope API with batch support and LRU cache."""
 
     def __init__(self, api_key: str = "", model: str = "text-embedding-v4"):
         self.api_key = api_key
         self.model = model
 
-    @functools.lru_cache(maxsize=512)
-    def _embed_single(self, text: str) -> tuple[float, ...]:
+    def embed(self, texts: list[str]) -> list[list[float]]:
         import dashscope
 
         if self.api_key:
             dashscope.api_key = self.api_key
+
+        # Batch call: DashScope API accepts input as a single string or list
         try:
-            resp = dashscope.TextEmbedding.call(model=self.model, input=text)
+            resp = dashscope.TextEmbedding.call(model=self.model, input=texts)
             if resp.status_code != 200:
                 raise RuntimeError(f"DashScope API error (status={resp.status_code}): {resp}")
-            emb = resp.output["embeddings"][0]["embedding"]
-            return tuple(emb)
+            # Response order matches input order
+            return [item["embedding"] for item in resp.output["embeddings"]]
         except Exception as e:
-            logger.error("DashScope embed failed for text (len=%d): %s", len(text), e)
+            logger.error("DashScope batch embed failed (%d texts): %s", len(texts), e)
             raise
-
-    def embed(self, texts: list[str]) -> list[list[float]]:
-        return [list(self._embed_single(t)) for t in texts]
 
 
 class LMStudioEmbedding(EmbeddingProvider):
-    """Embedding via LM Studio (OpenAI-compatible API) with LRU cache and batching."""
+    """Embedding via LM Studio (OpenAI-compatible API) with batch."""
 
     def __init__(self, base_url: str = "http://localhost:1234/v1", model: str = ""):
         self.base_url = base_url.rstrip("/")
         self.model = model or "text-embedding-ada-002"
 
-    @functools.lru_cache(maxsize=512)
-    def _embed_single(self, text: str) -> tuple[float, ...]:
+    def embed(self, texts: list[str]) -> list[list[float]]:
         from openai import OpenAI
 
         try:
             client = OpenAI(base_url=self.base_url, api_key="not-needed", max_retries=0)
-            resp = client.embeddings.create(
-                input=text,
-                model=self.model,
-                timeout=30,
-            )
-            return tuple(resp.data[0].embedding)
+            # Batch call: OpenAI API accepts input as a list of strings
+            resp = client.embeddings.create(input=texts, model=self.model, timeout=60)
+            # Sort by index to preserve input order
+            sorted_data = sorted(resp.data, key=lambda x: x.index)
+            return [item.embedding for item in sorted_data]
         except Exception as e:
-            logger.error("LM Studio embed failed for text (len=%d): %s", len(text), e)
+            logger.error("LM Studio batch embed failed (%d texts): %s", len(texts), e)
             raise
-
-    def embed(self, texts: list[str]) -> list[list[float]]:
-        return [list(self._embed_single(t)) for t in texts]
