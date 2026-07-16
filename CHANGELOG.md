@@ -1,3 +1,10 @@
+## [0.1.1](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.1.0...v0.1.1) (2026-07-16)
+
+
+### Bug Fixes
+
+* release publish version handling ([5ccce92](https://github.com/kuaizhongqiang/AgentWebSearchingTool/commit/5ccce927e678c6fbf76343d4fd5f3c005c3137f3))
+
 # [0.1.0](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.0.6...v0.1.0) (2026-07-16)
 
 
