@@ -12,8 +12,8 @@ from pydantic import BaseModel, field_validator
 from .config import load_config
 from .search import SearchResult
 from .search.searxng_provider import SearXNGProvider
-from .fetch import FetchEngine, PageContent
-from .extract import ExtractEngine, ExtractedContent
+from .fetch import FetchEngine
+from .extract import ExtractEngine
 from .retrieval import Document, ScoredDocument, DashScopeEmbedding, LMStudioEmbedding
 from .retrieval.pipeline import CrossEncoder, RetrievalPipeline
 
