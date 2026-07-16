@@ -100,3 +100,4 @@ cd cli && npm test                    # 13 tests
 | M4 | ✅ | MCP Server + CLI |
 | M5 | ✅ | CI/CD + 部署 |
 | M6 | 🏗 | 文档完善 |
+
