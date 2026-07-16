@@ -1,3 +1,11 @@
+# [0.1.0](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.0.6...v0.1.0) (2026-07-16)
+
+
+### Features
+
+* M6 全项目文档完善 ([7c8b155](https://github.com/kuaizhongqiang/AgentWebSearchingTool/commit/7c8b1553fa29818df670a0fa24452e00469cadd9))
+* M6 全项目文档完善 ([60601ac](https://github.com/kuaizhongqiang/AgentWebSearchingTool/commit/60601ac515cffd17a3f9fa419a656bacffda0944))
+
 ## [0.0.6](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.0.5...v0.0.6) (2026-07-16)
 
 
