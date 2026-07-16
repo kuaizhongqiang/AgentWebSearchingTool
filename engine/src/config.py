@@ -34,6 +34,21 @@ def load_config(path: str | Path | None = None) -> dict[str, Any]:
             "engine": "trafilatura",
             "max_content_length": 10000,
         },
+        "retrieval": {
+            "embedding": {
+                "provider": "dashscope",
+                "dashscope": {
+                    "model": "text-embedding-v4",
+                },
+                "lmstudio": {
+                    "base_url": "http://localhost:1234/v1",
+                },
+            },
+            "cross_encoder": {
+                "model": "",
+            },
+            "top_k": 5,
+        },
         "server": {
             "host": "0.0.0.0",
             "port": 8000,
@@ -50,6 +65,8 @@ def load_config(path: str | Path | None = None) -> dict[str, Any]:
         config["search"]["searxng_url"] = os.environ["SEARXNG_URL"]
     if os.environ.get("ENGINE_PORT"):
         config["server"]["port"] = int(os.environ["ENGINE_PORT"])
+    if os.environ.get("DASHSCOPE_API_KEY"):
+        config["retrieval"]["embedding"]["dashscope"]["api_key"] = os.environ["DASHSCOPE_API_KEY"]
 
     return config
 

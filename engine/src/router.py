@@ -14,6 +14,8 @@ from .search import SearchResult
 from .search.searxng_provider import SearXNGProvider
 from .fetch import FetchEngine, PageContent
 from .extract import ExtractEngine, ExtractedContent
+from .retrieval import Document, ScoredDocument, DashScopeEmbedding, LMStudioEmbedding
+from .retrieval.pipeline import CrossEncoder, RetrievalPipeline
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +26,36 @@ fetch_engine = FetchEngine(
     max_concurrent=config["fetch"]["max_concurrent"],
 )
 extract_engine = ExtractEngine(max_content_length=config["extract"]["max_content_length"])
+
+# Retrieval pipeline (lazy init)
+_retrieval_pipeline: RetrievalPipeline | None = None
+
+
+def _get_retrieval_pipeline() -> RetrievalPipeline:
+    global _retrieval_pipeline
+    if _retrieval_pipeline is not None:
+        return _retrieval_pipeline
+
+    rc = config["retrieval"]
+    emb_cfg = rc["embedding"]
+    if emb_cfg["provider"] == "lmstudio":
+        from os import environ
+        embedder = LMStudioEmbedding(
+            base_url=emb_cfg["lmstudio"]["base_url"],
+        )
+    else:
+        embedder = DashScopeEmbedding(
+            api_key=emb_cfg["dashscope"].get("api_key", ""),
+            model=emb_cfg["dashscope"]["model"],
+        )
+
+    cross_encoder = CrossEncoder(model_name=rc["cross_encoder"]["model"])
+    _retrieval_pipeline = RetrievalPipeline(
+        embedder=embedder,
+        cross_encoder=cross_encoder,
+        top_k_final=rc["top_k"],
+    )
+    return _retrieval_pipeline
 
 
 class SearchRequest(BaseModel):
@@ -124,6 +156,32 @@ async def scrape(req: ScrapeRequest):
         else:
             results.append(FetchResponse(url=page.url, status_code=page.status_code, fetched_with=page.fetched_with))
     return ScrapeResponse(results=results)
+
+
+class FilterRequest(BaseModel):
+    query: str
+    documents: list[str]
+    top_k: int = 0  # 0 = use config default
+
+
+class FilterResponse(BaseModel):
+    query: str
+    results: list[ScoredDocument]
+
+
+@app.post("/filter", response_model=FilterResponse)
+async def filter(req: FilterRequest):
+    """Vector-based relevance filtering of documents against a query."""
+    try:
+        pipeline = _get_retrieval_pipeline()
+        docs = [Document(text=t) for t in req.documents]
+        top_k = req.top_k if req.top_k > 0 else config["retrieval"]["top_k"]
+        pipeline.top_k_final = top_k
+        results = pipeline.run(query=req.query, documents=docs)
+        return FilterResponse(query=req.query, results=results)
+    except Exception as e:
+        logger.error("Filter failed: %s", e)
+        raise HTTPException(status_code=502, detail=str(e))
 
 
 def main():
