@@ -16,6 +16,17 @@ extract:
   engine: trafilatura
   max_content_length: 10000
 
+retrieval:
+  embedding:
+    provider: dashscope          # dashscope | lmstudio
+    dashscope:
+      model: text-embedding-v4
+    lmstudio:
+      base_url: http://localhost:1234/v1
+  cross_encoder:
+    model: ""                    # empty = fallback scorer
+  top_k: 5
+
 server:
   host: 0.0.0.0
   port: 8000
