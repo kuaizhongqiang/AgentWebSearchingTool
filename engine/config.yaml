@@ -1,0 +1,21 @@
+# AgentWebSearchingTool Engine 配置文件
+search:
+  provider: searxng
+  searxng_url: http://127.0.0.1:8888
+  default_engine: google
+  max_results: 20
+
+fetch:
+  strategy: hybrid       # http | browser | hybrid
+  request_interval: 1.0
+  max_concurrent: 5
+  respect_robots_txt: true
+  user_agent_rotation: false
+
+extract:
+  engine: trafilatura
+  max_content_length: 10000
+
+server:
+  host: 0.0.0.0
+  port: 8000
