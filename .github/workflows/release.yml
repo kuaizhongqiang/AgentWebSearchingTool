@@ -83,7 +83,7 @@ jobs:
           node-version: 20
           registry-url: "https://registry.npmjs.org"
       - name: Set version
-        run: npm version ${{ needs.release.outputs.version }} --no-git-tag-version
+        run: npm version ${{ needs.release.outputs.version }} --no-git-tag-version --allow-same-version 2>/dev/null || true
       - run: npm ci
       - run: npm run build
       - run: npm publish --access public
@@ -104,7 +104,7 @@ jobs:
           node-version: 20
           registry-url: "https://registry.npmjs.org"
       - name: Set version
-        run: npm version ${{ needs.release.outputs.version }} --no-git-tag-version
+        run: npm version ${{ needs.release.outputs.version }} --no-git-tag-version --allow-same-version 2>/dev/null || true
       - run: npm ci
       - run: npm run build
       - run: npm publish --access public
