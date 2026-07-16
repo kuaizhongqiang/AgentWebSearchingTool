@@ -1,0 +1,18 @@
+[Unit]
+Description=Agent Web Search Engine
+After=network.target
+
+[Service]
+Type=simple
+User=agent-search
+WorkingDirectory=/opt/agent-web-search/engine
+ExecStart=/opt/agent-web-search/engine/.venv/bin/uvicorn src.router:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=5
+Environment=SEARXNG_URL=http://127.0.0.1:8888
+Environment=ENGINE_PORT=8000
+Environment=DASHSCOPE_API_KEY=%d
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
