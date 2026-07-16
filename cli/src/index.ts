@@ -1,6 +1,9 @@
 #!/usr/bin/env node
 
+import { spawn } from "node:child_process";
 import { createInterface } from "node:readline";
+import { fileURLToPath } from "node:url";
+import { dirname, resolve } from "node:path";
 import { Command } from "commander";
 import type { SearchResult, FetchResult, FilterItem } from "@agent-web-search/types";
 
@@ -196,13 +199,14 @@ program
   .description("Start MCP Server mode (stdio)")
   .action(() => {
     console.error("Starting MCP Server...");
-    const MCP_SERVER_PATH = process.env.MCP_SERVER_PATH
-      ?? "../mcp-server/dist/index.js";
-    const child = require("child_process").spawn(
-      process.execPath,
-      [MCP_SERVER_PATH],
-      { stdio: "inherit", env: { ...process.env, ENGINE_URL } }
-    );
+    // Relative to this CLI package, not CWD
+    const cliDir = dirname(fileURLToPath(import.meta.url));
+    const defaultPath = resolve(cliDir, "..", "..", "mcp-server", "dist", "index.js");
+    const mcpPath = process.env.MCP_SERVER_PATH ?? defaultPath;
+    const child = spawn(process.execPath, [mcpPath], {
+      stdio: "inherit",
+      env: { ...process.env, ENGINE_URL },
+    });
     child.on("exit", (code: number | null) => process.exit(code ?? 0));
   });
 
