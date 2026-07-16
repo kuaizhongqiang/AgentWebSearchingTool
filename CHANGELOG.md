@@ -1,3 +1,10 @@
+## [0.0.6](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.0.5...v0.0.6) (2026-07-16)
+
+
+### Bug Fixes
+
+* release.yml semantic-release 输出捕获 ([f94b660](https://github.com/kuaizhongqiang/AgentWebSearchingTool/commit/f94b6605ab84f5c919cd63e5fbfb5de6522179cb))
+
 ## [0.0.5](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.0.4...v0.0.5) (2026-07-16)
 
 
