@@ -20,10 +20,17 @@ M1: SearXNG 清理 & 跑通 ✅ — 已完成。SearXNG Fork 精简完毕，JSON
 ```
 text
 AgentWebSearchingTool/
-├── searxng-core/          # SearXNG Fork (git submodule), AGPL-3.0, 独立进程
-├── engine/                # Python 核心引擎 (TODO), MIT
-├── mcp-server/            # MCP Server (TODO), TypeScript, MIT
-├── cli/                   # CLI 工具 (TODO), TypeScript, MIT
+├── searxng-core/          # SearXNG Fork (git submodule), AGPL-3.0
+│                          #   → 打包进 engine/ wheel, 随 PyPI 发布
+├── engine/                # Python 核心引擎, MIT
+│   ├── scripts/           #   构建脚本 (prepare_build.py 打包 searxng-core)
+│   ├── src/
+│   │   ├── router.py      #   FastAPI 路由 + SearXNG 生命周期管理
+│   │   ├── searxng_runner.py  # SearXNG 子进程管理器
+│   │   └── ...
+│   └── tests/             #   66 tests
+├── mcp-server/            # MCP Server, MIT (TypeScript)
+├── cli/                   # CLI 工具, MIT (TypeScript)
 └── docs/                  # 设计文档
 ```
 

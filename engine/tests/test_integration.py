@@ -18,7 +18,10 @@ class TestHealth:
     def test_health_returns_ok(self):
         resp = client.get("/health")
         assert resp.status_code == 200
-        assert resp.json() == {"status": "ok"}
+        data = resp.json()
+        assert data["status"] == "ok"
+        assert "searxng" in data
+        assert "searxng_url" in data
 
 
 # ── Search with mocked SearXNG HTTP ─────────────────────────────────────────
@@ -35,6 +38,14 @@ MOCK_SEARXNG_RESULTS = {
 MOCK_SEARXNG_EMPTY = {"query": "x", "results": [], "unresponsive_engines": []}
 
 
+def _patch_searxng_ready():
+    """Patch SearXNGManager.is_ready property to return True."""
+    return mock.patch(
+        "src.searxng_runner.SearXNGManager.is_ready",
+        new_callable=mock.PropertyMock(return_value=True),
+    )
+
+
 class TestSearchWithMock:
     def test_search_parses_mocked_results(self):
         """Mock _search_via_http to verify result parsing."""
@@ -43,7 +54,8 @@ class TestSearchWithMock:
         async def mock_http(url, timeout):
             return MOCK_SEARXNG_RESULTS
 
-        with mock.patch("src.search.searxng_provider._search_via_http", mock_http):
+        with mock.patch("src.search.searxng_provider._search_via_http", mock_http), \
+             _patch_searxng_ready():
             resp = client.post("/search", json={"query": "hello", "engine": "google"})
             assert resp.status_code == 200
             data = resp.json()
@@ -55,7 +67,8 @@ class TestSearchWithMock:
         async def mock_http(url, timeout):
             return MOCK_SEARXNG_EMPTY
 
-        with mock.patch("src.search.searxng_provider._search_via_http", mock_http):
+        with mock.patch("src.search.searxng_provider._search_via_http", mock_http), \
+             _patch_searxng_ready():
             resp = client.post("/search", json={"query": "x"})
             assert resp.status_code == 200
             assert resp.json()["results"] == []
@@ -64,7 +77,8 @@ class TestSearchWithMock:
         async def mock_http(url, timeout):
             raise TimeoutError("Connection timed out")
 
-        with mock.patch("src.search.searxng_provider._search_via_http", mock_http):
+        with mock.patch("src.search.searxng_provider._search_via_http", mock_http), \
+             _patch_searxng_ready():
             resp = client.post("/search", json={"query": "test"})
             assert resp.status_code == 502
 
@@ -76,7 +90,8 @@ class TestSearchWithMock:
                 "unresponsive_engines": [],
             }
 
-        with mock.patch("src.search.searxng_provider._search_via_http", mock_http):
+        with mock.patch("src.search.searxng_provider._search_via_http", mock_http), \
+             _patch_searxng_ready():
             resp = client.post("/search", json={"query": "test", "num": 3})
             assert resp.status_code == 200
             assert len(resp.json()["results"]) == 3

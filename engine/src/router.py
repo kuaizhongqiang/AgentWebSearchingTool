@@ -1,5 +1,8 @@
 # SPDX-License-Identifier: MIT
-"""FastAPI router — main entry point for the engine."""
+"""FastAPI router — main entry point for the engine.
+
+Manages SearXNG subprocess lifecycle during app startup/shutdown.
+"""
 
 from __future__ import annotations
 
@@ -16,11 +19,26 @@ from .fetch import FetchEngine
 from .extract import ExtractEngine
 from .retrieval import Document, ScoredDocument, DashScopeEmbedding, LMStudioEmbedding
 from .retrieval.pipeline import CrossEncoder, RetrievalPipeline
+from .searxng_runner import SearXNGManager
 
 logger = logging.getLogger(__name__)
 
 config = load_config()
-search_provider = SearXNGProvider(searxng_url=config["search"]["searxng_url"])
+
+# ── SearXNG subprocess manager ────────────────────────────────────────
+searxng_config = config.get("searxng_core", {})
+searxng_manager = SearXNGManager(
+    port=searxng_config.get("port", 8888),
+    bind_address=searxng_config.get("bind_address", "127.0.0.1"),
+    searxng_secret=searxng_config.get("secret"),
+    settings_path=searxng_config.get("settings_path"),
+    core_path=searxng_config.get("path"),
+    proxies=searxng_config.get("proxies"),
+)
+
+search_provider = SearXNGProvider(
+    searxng_url=searxng_manager.searxng_url,
+)
 fetch_engine = FetchEngine(
     request_interval=config["fetch"]["request_interval"],
     max_concurrent=config["fetch"]["max_concurrent"],
@@ -104,9 +122,27 @@ class ScrapeResponse(BaseModel):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Engine starting — SearXNG at %s", config["search"]["searxng_url"])
+    """Start SearXNG on startup, shut it down on shutdown."""
+    # ── Startup ──
+    auto_start = config.get("searxng_core", {}).get("auto_start", True)
+    if auto_start:
+        try:
+            searxng_manager.start()
+        except RuntimeError as e:
+            logger.error("Failed to start SearXNG: %s", e)
+            logger.warning("Engine will start without SearXNG — search endpoints will fail")
+    else:
+        logger.info(
+            "SearXNG auto-start disabled — ensure SearXNG is running at %s",
+            searxng_manager.searxng_url,
+        )
+
     yield
-    logger.info("Engine shutting down — releasing resources")
+
+    # ── Shutdown ──
+    logger.info("Engine shutting down — stopping SearXNG")
+    if auto_start:
+        searxng_manager.stop()
     await fetch_engine.close()
 
 
@@ -115,11 +151,18 @@ app = FastAPI(title="AgentWebSearchingTool Engine", version="0.1.0", lifespan=li
 
 @app.get("/health")
 async def health():
-    return {"status": "ok"}
+    searxng_status = "ok" if searxng_manager.is_ready else "unavailable"
+    return {
+        "status": "ok",
+        "searxng": searxng_status,
+        "searxng_url": searxng_manager.searxng_url,
+    }
 
 
 @app.post("/search", response_model=SearchResponse)
 async def search(req: SearchRequest):
+    if not searxng_manager.is_ready:
+        raise HTTPException(status_code=503, detail="SearXNG is not ready")
     try:
         response = await search_provider.search(query=req.query, num=req.num, engine=req.engine, page=req.page)
         return SearchResponse(query=response.query, results=response.results,
