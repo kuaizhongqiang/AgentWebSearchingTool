@@ -61,6 +61,21 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - name: Set version
+        run: |
+          python <<EOF
+          import re
+          with open('pyproject.toml') as f:
+              content = f.read()
+          content = re.sub(
+              r'^version = ".*"',
+              'version = "${{ needs.release.outputs.version }}"',
+              content, flags=re.MULTILINE
+          )
+          with open('pyproject.toml', 'w') as f:
+              f.write(content)
+          EOF
+          grep '^version' pyproject.toml
       - name: Bundle searxng-core into package
         run: python scripts/prepare_build.py
       - name: Build
