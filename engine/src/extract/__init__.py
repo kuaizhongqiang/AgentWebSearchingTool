@@ -11,8 +11,6 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ExtractedContent:
-    """Structured content extracted from HTML."""
-
     title: str = ""
     text: str = ""
     author: str = ""
@@ -22,39 +20,34 @@ class ExtractedContent:
 
 
 class ExtractEngine:
-    """Content extraction using trafilatura.
-
-    Extracts main article content, title, author, and date from HTML pages.
-    """
+    """Content extraction using trafilatura's bare_extraction."""
 
     def __init__(self, max_content_length: int = 10000):
         self.max_content_length = max_content_length
 
     def extract(self, html: str, url: str = "") -> ExtractedContent:
-        """Extract structured content from HTML."""
         import trafilatura
 
-        result = trafilatura.extract(
+        result = trafilatura.bare_extraction(
             html,
             url=url,
             include_comments=False,
             include_tables=True,
             no_fallback=False,
-            output_format="txt",
             with_metadata=True,
         )
 
         if result is None:
             return ExtractedContent(url=url)
 
-        text = result.text if hasattr(result, "text") else str(result)
+        text = result.text if hasattr(result, "text") and result.text else ""
         if len(text) > self.max_content_length:
-            text = text[: self.max_content_length] + "..."
+            text = text[:self.max_content_length] + "..."
 
         return ExtractedContent(
-            title=getattr(result, "title", ""),
+            title=getattr(result, "title", "") or "",
             text=text,
-            author=getattr(result, "author", ""),
-            date=getattr(result, "date", ""),
-            url=url,
+            author=getattr(result, "author", "") or "",
+            date=getattr(result, "date", "") or "",
+            url=getattr(result, "url", "") or url,
         )
