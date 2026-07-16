@@ -1,3 +1,10 @@
+## [0.0.4](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.0.3...v0.0.4) (2026-07-16)
+
+
+### Bug Fixes
+
+* CI lint + commitlint ([018b840](https://github.com/kuaizhongqiang/AgentWebSearchingTool/commit/018b840a816af7a0f1588bc09fc02f4ed45afc68))
+
 ## [0.0.3](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.0.2...v0.0.3) (2026-07-16)
 
 
