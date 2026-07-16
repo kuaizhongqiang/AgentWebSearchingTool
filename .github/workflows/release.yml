@@ -32,7 +32,18 @@ jobs:
             @semantic-release/changelog \
             @semantic-release/github \
             @semantic-release/git
-          npx semantic-release
+          output=$(npx semantic-release 2>&1) || true
+          echo "$output"
+          # Extract version from output and set GitHub Actions outputs
+          version=$(echo "$output" | grep -oP 'Published release \K\d+\.\d+\.\d+' | tail -1)
+          if [ -n "$version" ]; then
+            echo "version=$version" >> $GITHUB_OUTPUT
+            echo "new_release_published=true" >> $GITHUB_OUTPUT
+            echo "New release detected: v$version"
+          else
+            echo "new_release_published=false" >> $GITHUB_OUTPUT
+            echo "No new release"
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
