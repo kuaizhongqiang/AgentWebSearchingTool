@@ -1,3 +1,10 @@
+## [0.1.4](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.1.3...v0.1.4) (2026-07-17)
+
+
+### Bug Fixes
+
+* **#62:** 补充 valkey 传递依赖 async-timeout ([#66](https://github.com/kuaizhongqiang/AgentWebSearchingTool/issues/66)) ([65f4409](https://github.com/kuaizhongqiang/AgentWebSearchingTool/commit/65f44095ef29eab19849a3a28f66302023d7bd49)), closes [#62](https://github.com/kuaizhongqiang/AgentWebSearchingTool/issues/62)
+
 ## [0.1.3](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.1.2...v0.1.3) (2026-07-17)
 
 
