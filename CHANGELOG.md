@@ -1,3 +1,10 @@
+## [0.1.7](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.1.6...v0.1.7) (2026-07-17)
+
+
+### Bug Fixes
+
+* **#69:** SearXNG 启动改为非阻塞，不再卡住 engine lifespan ([#70](https://github.com/kuaizhongqiang/AgentWebSearchingTool/issues/70)) ([240a9fb](https://github.com/kuaizhongqiang/AgentWebSearchingTool/commit/240a9fb8332cb4bd20989c71c330e56277787b1a)), closes [#69](https://github.com/kuaizhongqiang/AgentWebSearchingTool/issues/69)
+
 ## [0.1.6](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.1.5...v0.1.6) (2026-07-17)
 
 
