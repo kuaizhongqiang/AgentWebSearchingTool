@@ -41,6 +41,9 @@ dependencies = [
     "isodate>=0.7",
     "typer>=0.26",
     "typing-extensions>=4.16",
+    # SearXNG-core dependencies (synced from searxng_core/requirements.txt)
+    "valkey>=6.1",
+    "sniffio>=1.3",
 ]
 
 [project.optional-dependencies]
