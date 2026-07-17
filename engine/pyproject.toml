@@ -42,6 +42,8 @@ dependencies = [
     "typer>=0.26",
     "typing-extensions>=4.16",
     # SearXNG-core dependencies (synced from searxng_core/requirements.txt)
+    # valkey 需要 async-timeout (环境标记 python <3.11.3 时自动拉，显式声明更稳妥)
+    "async-timeout>=4.0.3",
     "valkey>=6.1",
     "sniffio>=1.3",
 ]
