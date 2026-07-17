@@ -1,3 +1,10 @@
+## [0.1.6](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.1.5...v0.1.6) (2026-07-17)
+
+
+### Bug Fixes
+
+* **#62:** SearXNG 初始化超时改为后台等待，不再杀进程 ([#68](https://github.com/kuaizhongqiang/AgentWebSearchingTool/issues/68)) ([5403976](https://github.com/kuaizhongqiang/AgentWebSearchingTool/commit/54039769540f9b5091903d0729c511afe9c32080)), closes [#62](https://github.com/kuaizhongqiang/AgentWebSearchingTool/issues/62)
+
 ## [0.1.5](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.1.4...v0.1.5) (2026-07-17)
 
 
