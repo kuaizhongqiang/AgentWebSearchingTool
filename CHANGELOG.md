@@ -1,3 +1,13 @@
+## [0.1.3](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.1.2...v0.1.3) (2026-07-17)
+
+
+### Bug Fixes
+
+* **#62:** 修复 pypi-publish 版本号不同步问题 ([#64](https://github.com/kuaizhongqiang/AgentWebSearchingTool/issues/64)) ([6be9069](https://github.com/kuaizhongqiang/AgentWebSearchingTool/commit/6be906957a38a5a3e87496eb0e4e73bca548a785)), closes [#62](https://github.com/kuaizhongqiang/AgentWebSearchingTool/issues/62) [#62](https://github.com/kuaizhongqiang/AgentWebSearchingTool/issues/62)
+* **#62:** 补充 searxng-core 缺失依赖 valkey 和 sniffio ([#65](https://github.com/kuaizhongqiang/AgentWebSearchingTool/issues/65)) ([35512ea](https://github.com/kuaizhongqiang/AgentWebSearchingTool/commit/35512eaece4f9f1f271529cc6f71bee71c7f1a87)), closes [#62](https://github.com/kuaizhongqiang/AgentWebSearchingTool/issues/62)
+* keep all release artifacts for CI validation ([07a43f7](https://github.com/kuaizhongqiang/AgentWebSearchingTool/commit/07a43f788e9c068d74ed6fe6636ed781e82af703))
+* 支持 workflow_dispatch 手动触发发布 ([f961841](https://github.com/kuaizhongqiang/AgentWebSearchingTool/commit/f96184110ec786c5dc6a53543d7d42291b6001d7))
+
 ## [0.1.2](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.1.1...v0.1.2) (2026-07-16)
 
 
