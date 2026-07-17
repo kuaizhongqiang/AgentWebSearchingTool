@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 DEFAULT_PORT = 8888
 DEFAULT_BIND_ADDRESS = "127.0.0.1"
-STARTUP_TIMEOUT = 30.0  # seconds to wait for SearXNG to respond
+DEFAULT_STARTUP_TIMEOUT = 120.0  # seconds to wait for SearXNG to respond
 HEALTH_CHECK_INTERVAL = 0.5
 POLL_TIMEOUT = 5.0
 
@@ -77,6 +77,7 @@ class SearXNGManager:
         settings_path: str | Path | None = None,
         core_path: str | Path | None = None,
         proxies: dict[str, str | list[str]] | None = None,
+        startup_timeout: float = DEFAULT_STARTUP_TIMEOUT,
     ):
         self.port = port
         self.bind_address = bind_address
@@ -84,6 +85,7 @@ class SearXNGManager:
         self.settings_path = Path(settings_path) if settings_path else None
         self._core_path = _find_searxng_core_path(str(core_path) if core_path else None)
         self._proxies = proxies
+        self.startup_timeout = startup_timeout
 
         self._process: subprocess.Popen | None = None
         self._stderr_buf: IO | None = None
@@ -149,8 +151,8 @@ class SearXNGManager:
 
         logger.info("SearXNG subprocess started (pid=%s)", self._process.pid)
 
-        # Wait for health
-        deadline = time.monotonic() + STARTUP_TIMEOUT
+        # Wait for health (with graceful timeout — don't kill, let it continue in background)
+        deadline = time.monotonic() + self.startup_timeout
         while time.monotonic() < deadline:
             if self._process.poll() is not None:
                 # Process died during startup — collect logs
@@ -173,12 +175,14 @@ class SearXNGManager:
 
             time.sleep(HEALTH_CHECK_INTERVAL)
 
-        # Timeout — collect logs so far and kill
+        # Timeout — log warning but leave SearXNG running in background
+        # It may still be initializing (loading engines, building caches on first boot).
+        # Subsequent health checks will pick it up once it becomes ready.
         self._log_stderr()
-        self.stop()
-        raise RuntimeError(
-            f"SearXNG did not become ready within {STARTUP_TIMEOUT}s. "
-            "Check stderr above for details."
+        logger.warning(
+            "SearXNG did not become ready within %.0fs — leaving it running in background. "
+            "Subsequent requests will use it once initialization completes.",
+            self.startup_timeout,
         )
 
     def _log_stderr(self) -> None:

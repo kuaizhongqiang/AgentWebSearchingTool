@@ -34,6 +34,7 @@ searxng_manager = SearXNGManager(
     settings_path=searxng_config.get("settings_path"),
     core_path=searxng_config.get("path"),
     proxies=searxng_config.get("proxies"),
+    startup_timeout=searxng_config.get("startup_timeout", 120),
 )
 
 search_provider = SearXNGProvider(
