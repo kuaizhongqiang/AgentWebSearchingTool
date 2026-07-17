@@ -1,3 +1,10 @@
+## [0.1.5](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.1.4...v0.1.5) (2026-07-17)
+
+
+### Bug Fixes
+
+* **#62:** 补充 searxng-core 缺失依赖 Flask-Babel ([#67](https://github.com/kuaizhongqiang/AgentWebSearchingTool/issues/67)) ([b70f3c8](https://github.com/kuaizhongqiang/AgentWebSearchingTool/commit/b70f3c8628573948d86d545bcce8b278c8288b68)), closes [#62](https://github.com/kuaizhongqiang/AgentWebSearchingTool/issues/62)
+
 ## [0.1.4](https://github.com/kuaizhongqiang/AgentWebSearchingTool/compare/v0.1.3...v0.1.4) (2026-07-17)
 
 
