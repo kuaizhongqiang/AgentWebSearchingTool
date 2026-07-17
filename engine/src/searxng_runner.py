@@ -106,7 +106,11 @@ class SearXNGManager:
             return False
 
     def start(self) -> None:
-        """Launch SearXNG as a subprocess and wait until it's ready."""
+        """Launch SearXNG as a subprocess — returns quickly, does not block lifespan.
+
+        The subprocess continues initializing in the background after this method
+        returns.  Use :meth:`is_ready` to check readiness lazily.
+        """
         if self._process is not None:
             logger.warning("SearXNG is already running (pid=%s)", self._process.pid)
             return
@@ -151,11 +155,11 @@ class SearXNGManager:
 
         logger.info("SearXNG subprocess started (pid=%s)", self._process.pid)
 
-        # Wait for health (with graceful timeout — don't kill, let it continue in background)
-        deadline = time.monotonic() + self.startup_timeout
-        while time.monotonic() < deadline:
+        # Quick check: did the process die immediately (e.g. missing dependency)?
+        # Only wait 5s for this initial health — don't block the engine startup.
+        quick_deadline = time.monotonic() + 5.0
+        while time.monotonic() < quick_deadline:
             if self._process.poll() is not None:
-                # Process died during startup — collect logs
                 stdout, stderr = self._process.communicate(timeout=5)
                 logger.error(
                     "SearXNG process exited prematurely (rc=%s)\nstdout:\n%s\nstderr:\n%s",
@@ -168,21 +172,16 @@ class SearXNGManager:
                     f"SearXNG exited with code {self._process.returncode}. "
                     "Check the logs above for details."
                 )
-
             if self.is_ready:
                 logger.info("SearXNG is ready at %s", self.searxng_url)
                 return
-
             time.sleep(HEALTH_CHECK_INTERVAL)
 
-        # Timeout — log warning but leave SearXNG running in background
-        # It may still be initializing (loading engines, building caches on first boot).
-        # Subsequent health checks will pick it up once it becomes ready.
-        self._log_stderr()
-        logger.warning(
-            "SearXNG did not become ready within %.0fs — leaving it running in background. "
-            "Subsequent requests will use it once initialization completes.",
-            self.startup_timeout,
+        # Process is alive — return immediately.  It will finish initialising in the
+        # background and is_ready will return True once it's fully up.
+        logger.info(
+            "SearXNG starting in background (pid=%s) — engine will check readiness lazily",
+            self._process.pid,
         )
 
     def _log_stderr(self) -> None:
